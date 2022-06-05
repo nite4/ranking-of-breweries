@@ -1,0 +1,415 @@
+---
+title: "Atrakcyjność browarów rzemieślniczych z perspektywy konsumenta"
+subtitle: "Projekt I - Porządkowanie liniowe - Statystyczna Analiza Danych w R"
+author: "Magdalena Nitefor"
+date: "listopad 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(clusterSim)
+
+krafty<-read.csv("data_final.csv", sep=";", dec=".", header=TRUE, row.names=1)
+
+```
+
+## WSTĘP
+
+Na przestrzeni ostatnich lat daje się zaobserwować pewna tendencja do odchodzenia od piw produkowanych przez koncerny, takie jak Heineken czy Carlsberg, na rzecz piw z browarów regionalnych i rzemieślniczych. Ta tendencja jest obserwowalna  głównie wśród mieszkańców dużych miast, gdyż to tam jest największy dostęp do różnych miejsc, mających w swej ofercie coraz więcej piw niekoncernowych, które autorka ogólnie będzie nazywać rzemieślniczymi.
+
+W związku z tym rosnącym zainteresowaniem otwierają się co raz to nowe browary, posiadające w swej ofercie zwykle szeroką gamę piw.  W poniższym badaniu autorka podejmuje próbę identyfikacji najlepszych oraz najgorszych pod względem atrakcyjności dla klientów browarów rzemieślniczych w Polsce w 2018 roku. Pod pojęciem atrakcyjności kryje się stopień różnorodności oferty browaru. Należy pamiętać, że atrakcyjność browaru w oczach klienta jest determinowana zarówno przez dotychczasowe osiągnięcia, takie jak uznanie w ogólnopolskich konkursach czy liczba nowości, jak i przez porażki, jak liczba ”wybuchających” butelek piw czy nieudane warki. Jednak, z uwagi na niemożność rzetelnego zebrania danych o porażkach browarów, czyni je to praktycznie niemierzalnymi. Przeprowadzone badanie może być zatem, szczególnie w świetle braku publikacji o podobnej tematyce, raczej punktem odniesienia niż wiążącym zestawieniem i rekonendacjami.
+
+## DANE ŹRÓDŁOWE
+
+Niezależnie od tego, jakiej dziedziny dotyczy, atrakcyjność (obszaru, sklepów czy browarów) jest pojęciem złożonym i cechującym się dużą subiektywnością. Autorka definiuje atrakcyjność na potrzeby badania jako elastyczność i różnorodność dostosowania oferty browaru do potencjalnie jak najszerszego grona potencjalnych klientów oraz uznanie w najbardziej rozpoznawalnym i znaczącym ogólnopolskim konkursie piw rzemieślniczych.
+
+W wyjściowym zestawie danych znalazło się siedem zmiennych o następującym charakterze:
+
+- średnia ocena browaru według portalu Untappd, będąca stymulantą, gdyż zgodnie z przyjętym zwyczajem im dana ocena jest wyższa, tym lepiej postrzega się dany browar,
+
+- liczba piwnych premier, które dany browar miał w roku 2018 - jest to stymulanta, ponieważ świadczy o aktywności browaru, jego chęci do wychodzenia naprzeciw oczekiwaniom konsumentów oraz niejednokrotnie o byciu na bieżąco z trendami rynkowymi pod względem popularności konkretnych gatunków piw,
+
+- liczba kooperacji krajowych oznacza, ile spośród wszystkich piwnych premier było projektem więcej niż jednego browaru, to znaczy co najmniej dwa polskie browary pracowały nad uwarzeniem jednego piwa - jest to stymulanta, ponieważ również świadczy o większej aktywności danego browaru na rynku krajowym oraz otwartości na współpracę w kraju,
+
+- liczba kooperacji międzynarodowych oznacza, ile spośród wszystkich piwnych premier powstało dzięki współpracy jednego polskiego i co najmniej jednego zagranicznego browaru - podobnie jak liczba kooperacji krajowych, jest to stymulanta, ponieważ świadczy o większej aktywności danego browaru na rynkach międzynarodowych oraz otwartości na współpracę z zagranicą,
+
+- liczba posiadanych własnych lub franczyzowanych pubów, będąca stymulantą, gdyż posiadanie własnego obiektu gastronomicznego wpływa na wizerunek browaru znacznie bardziej pozytywnie, niż sama możliwość kupienia danego piwa w sklepie lub niededykowanym obiekcie gastronomicznym, a dodatkowo przyciąga większą liczbę konsumentów, którzy na co dzień nie pasjonują się piwem rzemieślniczym, oraz pozwala na organizację własnych wydarzeń browaru,
+
+- liczba nagród z Poznańskiego Konkursu Piw Rzemieślniczych 2018 - jest to stymulanta, ponieważ w im większej liczbie kategorii dany browar został doceniony, tym bardziej potencjalni klienci mogą czuć się zachęceni do sięgnięcia po piwo z oferty takiego browaru,
+
+- liczba premierowych piw, które były leżakowane w beczkach - proces leżakowania w beczkach oznacza, że na jednym z końcowych etapów produkcji dany browar zdecydował się umieścić piwo w beczce, najczęściej po whiskey, whisky lub winie, aby nabrało ono specyficznych cech aromatyczno-smakowych - jest to stymulanta, ponieważ ze swej natury sam proces leżakowania nadaje piwu dodatkowych walorów, a także przyczynia się do chętniejszego sięgania po nie przez konsumentów.
+
+Dane pochodzą z portalu untappd.com, ze strony http://www.zwrotnica.com.pl, stron wszystkich browarów, które autorka uwzględniła w badaniu, oraz ze strony poznańskiego konkursu http://www.kraftroku.pl/post/kraft-roku-2018-wyniki,12.html.
+
+Autorka do badania wybrała 20 polskich browarów rzemieślniczych: AleBrowar, Browar Artezan, BroKreacja, Browar Funky Fluid, Browar Golem, Inne Beczki, Browar Maryensztadt, Browar Olimp, Browar PINTA, Piwne Podziemie, Browar Piwojad, Browar Podgórz, Browar Pracownia Piwa, Browar Raduga, Browar ReCraft, Browar Rockmill, Browar Stu Mostów, Browar Trzech Kumpli, Browar Widawa oraz Browar Ziemia Obiecana. Należy jednak pamiętać, że nie są to wszystkie browary obecne na rynku w 2018 roku, a jedynie próba z całej populacji browarów.
+
+Następnie dane zostały poddane selekcji o formalnym charakterze. Najpierw autorka zbadała wartości współczynników korelacji (rozumianych jako klasyczne wspóczynniki korelacji Pearsona). Jako, że żadna wartość bezwzględna  nie przekraczała 0.9, autorka przystąpiła do kolejnego kroku, którym było zbadanie współczynnika zmienności (rozumianego jako stosunek średniej do odchylenia standardowego) w obrębie każdej z cech. Okazało się, że zmienna ”średnia ocena portalu Untappd” wykazuje zmienność na poziomie zaledwie 0.025, zatem przypomina stałą do tego stopnia, że została usunięta z zestawu badanych cech. Ostatnim krokiem było zbadanie obserwacji pod kątem występowania obserwacji odstających, których na podstawie reguły trzech sigm autorka nie wyróżniła.
+
+Zatem finalny zbiór danych obejmuje wszystkie obserwacje i następujące cechy: 
+
+X1 - liczba premier, 
+
+X2 - liczba kooperacji krajowych, 
+
+X3 - liczba kooperacji międzynarodowych, 
+
+X4 - liczba własnych lub franczyzowanych pubów, 
+
+X5 - liczba nagród z poznańskiego konkursu,
+
+X6 - liczba premier leżakowanych w beczkach po innych alkoholach.
+
+Poniżej prezentowane są statystyki opisowe oraz macierz korelacji ostatecznych zmiennych:
+
+```{r}
+#statystyki opisowe
+summary(krafty)
+#macierz korelacji
+round(cor(krafty),2)
+```
+
+Dodatkowo autorka w badaniu podejmuje próbę zbadania, jaki wpływ na ostateczną ocenę atrakcyjności będą miały wagi, nadane na trzy sposoby: bez różnicowania - wówczas waga każdej zmiennej wyniesie 1/n, gdzie n - liczba badanych zmiennych, ekspercko - wówczas autorka nadaje wagi każdej zmiennej zgodnie z rozeznaniem w sytuacji na rynku piw rzemieślniczych, oraz wprost proporcjonalnie do informacyjności cech - waga cechy odpowiada ilorazowi współczynnika zmienności tej cechy do sumy wszystkich współczynników zmienności cech.
+
+Zmienne bez ważenia będą miały nadaną wagę ⅙.
+
+Aby wyjaśnić nadane poprzez ekspercką ocenę wagi, autorka przyjęła następującą argumentację:
+
+X1 - waga 0.25 - autorka uznaje liczbę premier za najważniejszą ze zmiennych, które charakteryzują dany browar, ponieważ jest to najistotniejsza cecha z perspektywy wyboru, dokonywanego przez konsumenta,
+
+X2, X3 - waga 0.2 - autorka uznaje liczbę kooperacji krajowych i międzynarodowych za równie wpływowe, jednak w mniejszym stopniu niż X1, ponieważ  znacząco zwiększają one stopień atrakcyjności browaru dla klientów i jego rozpoznawalność,
+
+X5 - waga 0.15 - autorka nadaje liczbie nagród wagę 0.15, ponieważ udział w poznańskim konkursie nie jest obligatoryjny dla żadnego browaru oraz nie ma tak znaczącego wpływu na atrakcyjność browaru w oczach klienta jak liczba premier i kooperacji,
+
+X4, X6 - waga 0.1 - autorka uznaje liczbę pubów oraz liczbę premier leżakowanych w beczkach za najmniej wpływowe, ponieważ obie cechy wykazują najwyższy poziom trudności w kwestii pozyskania, zarówno lokalizacji dla pubu jak i beczek po innych alkoholach dla leżakowania.
+
+Z kolei wagi nadawane wprost proporcjonalnie do informacyjności cech ukształtowały się następująco:
+
+X1 - waga 0.07
+
+X2 - waga 0.17
+
+X3 - waga 0.23
+
+X4 - waga 0.16
+
+X5 - waga 0.24
+
+X6 - waga 0.13
+
+```{r}
+#standaryzacja i normalizacja
+krafty_std<-scale(krafty)
+krafty_norm<-data.Normalization(krafty)
+
+#współczynnik zmienności cech
+wz <- c()
+suma_wz<-0
+for (i in 1:6)
+{
+  wz[i] = sd(krafty[,i])/mean(krafty[,i])
+  suma_wz = suma_wz+wz[i]
+}
+names(wz)<-colnames(krafty)
+
+#wagi informacyjne
+wagi_wz<-c()
+for (i in 1:6)
+  wagi_wz[i] = round(wz[i]/suma_wz,2)
+krafty_std_wwz<-krafty_std*sqrt(wagi_wz)
+wagi_wz
+
+#wagi eksperckie
+wagi_e<-c(0.25,0.2,0.2,0.15,0.1,0.15)
+krafty_std_we<-krafty_std*sqrt(wagi_e)
+wagi_e
+```
+
+Jest wyraźnie widoczne, że wagi nadane ekspercko znacząco różnią się od wag wynikających z informacyjności cech.
+
+Nadawanie wag przy pomocy eksperckiej oceny może być istotną wadą podczas konstruowania badania, ponieważ cechuje je ścisły subiektywizm - faworyzują jedne zmienne na rzecz innych w sposób, który relatywnie łatwo jest podważyć. Z tego powodu autorka zdecydowała się skorzystać również z wag wyznaczanych w ściśle matematyczny sposób oraz porównać obie metody z metodą, w której każda zmienna ma jednakową wagę, co z kolei stanowi zaletę badania, gdyż posiada ono cechy pracy porównawczej.
+
+Autorka spodziewa się nieco odmiennych wyników dla każdego sposobu stosowania wag, jednak ostatecznie pierwsze oraz ostatnie miejsca w badaniu powinny w przybliżeniu pokrywać się bez względu na metodę konstruowania rankingu i system ważenia.
+
+## ZRÓŻNICOWANIE ATRAKCYJNOŚCI BROWARÓW RZEMIEŚLNICZYCH W POLSCE W 2018 ROKU - METODY BADAWCZE
+
+Próbę ustalenia najbardziej oraz najmniej atrakcyjnych browarów rzemieślniczych w Polsce w 2018 roku autorka podjęła na podstawie konstrukcji rankingu. Z uwagi na fakt, że opracowania tego typu nie istnieją, zatem nie ma punktu odniesienia dla niniejszego badania, autorka przyjęła, że utworzy ranking trzema odmiennymi metodami, a wnioskowanie przeprowadzi na podstawie wyników tych rankingów w odniesieniu do siebie.
+
+Na potrzeby badania autorka przyjęła definicję odległości jako klasyczną odległość euklidesową. Aby poprawnie obliczyć odległość z uwzględnieniem wag, autorka podczas standaryzacji danych dokonała dodatkowo mnożenia przez pierwiastek kwadratowy z wag, co daje się wyprowadzić ze wzoru.
+
+Autorka przyjęła konstruowanie rankingów następującymi metodami, w których wyróżnia się kolejne kroki:
+
+- metoda sum standaryzowanych (MSS):
+
+    - standaryzacja danych, rozumiana jako iloraz różnicy wartości zmiennej i średniej wartości zmiennej do odchylenia standardowego,
+
+    - wyznaczenie średnich wartości zestandaryzowanych zmiennych i uwzględnienie wag dla poszczególnych zmiennych,
+
+    - wyznaczenie syntetycznego wskaźnika rankingowego jako iloraz różnicy średniej wartości obiektu i minimum wartości średniej spośród obiektów do maksimum różnicy średniej wartości obiektu i minimum wartości średniej spośród obiektów,
+
+    - uporządkowanie malejąco uzyskanych wartości wskaźnika;
+    
+```{r include = FALSE}
+#MSS bez wag
+si1<-c()
+for(i in 1:20)
+{
+  si1[i]<-mean(krafty_std[i,])
+}
+names(si1)<-rownames(krafty)
+MSS<-(si1-min(si1))/(max(si1-min(si1)))
+#MSS<-sort(MSS,decreasing=TRUE)
+
+#MSS z wagami eksperckimi
+si2<-c()
+for (i in 1:20)
+{
+    si2[i]<-mean(krafty_std_we[i,])
+}
+names(si2)<-rownames(krafty)
+MSS_we<-(si2-min(si2))/(max(si2-min(si2)))
+#MSS_we<-sort(MSS_we,decreasing=TRUE)
+
+#MSS z wagami informacyjnymi
+si3<-c()
+for (i in 1:20)
+{
+    si3[i]<-mean(krafty_std_wwz[i,])
+}
+names(si3)<-rownames(krafty)
+MSS_wwz<-(si3-min(si3))/max(si3-min(si3))
+#MSS_wwz<-sort(MSS_wwz,decreasing=TRUE)
+```
+
+- metoda Hellwiga (Hellwig, 1968):
+
+    - standaryzacja danych, rozumiana jako iloraz różnicy wartości zmiennej i średniej wartości zmiennej do odchylenia standardowego,
+
+    - wyznaczenie wzorcowego obiektu jako maksima zmiennych zestandaryzowanych ważonych obiektów,
+
+    - wyznaczenie odległości poszczególnych obiektów od obiektu wzorcowego z uwzględnieniem wag,
+
+    - wyznaczenie  odległości „możliwie dalekiej” jako suma średniej i dwukrotności odchylenia standardowego,
+
+    - wyznaczenie wskaźnika rankingowego obiektów jako różnica jedności i ilorazu odległości poszczególnych obiektów do odległości „możliwie dalekiej”,
+
+    - uporządkowanie malejąco otrzymanych wartości wskaźnika;
+
+```{r, include=FALSE}
+#metoda Hellwiga bez wag
+wzorzec1<-c()
+wzorzec1[1]<-max(krafty_std[,1])
+for(i in 1:6) 
+{
+  wzorzec1[i]<-max(krafty_std[,i])
+}
+di0<-c()
+for (i in 1:20) 
+{
+  dane<-rbind(krafty_std[i,],wzorzec1)
+  di0[i]<-dist(dane)
+}
+d0<-mean(di0)+2*sd(di0)
+sih1<-1-di0/d0
+names(sih1)<-rownames(krafty)
+#H1<-sort(sih1,decreasing=TRUE)
+
+#metoda Hellwiga z wagami eksperckimi
+wzorzec2<-c()
+wzorzec2[1]<-max(krafty_std_we[,1])
+for(i in 1:6) 
+{
+  wzorzec2[i]<-max(krafty_std_we[,i])
+}
+di02<-c()
+for (i in 1:20) 
+{
+  dane<-rbind(krafty_std_we[i,],wzorzec2)
+  di02[i]<-dist(dane)
+}
+d02<-mean(di02)+2*sd(di02)
+sih2<-1-di02/d02
+names(sih2)<-rownames(krafty)
+#H2<-sort(sih2,decreasing=TRUE)
+
+#metoda Hellwiga z wagami informacyjnymi
+wzorzec3<-c()
+wzorzec3[1]<-max(krafty_std_wwz[,1])
+for(i in 1:6) 
+{
+  wzorzec3[i]<-max(krafty_std_wwz[,i])
+}
+di03<-c()
+for (i in 1:20) 
+{
+  dane<-rbind(krafty_std_wwz[i,],wzorzec3)
+  di03[i]<-dist(dane)
+}
+d03<-mean(di03)+2*sd(di03)
+sih3<-1-di03/d03
+names(sih3)<-rownames(krafty)
+#H3<-sort(sih3,decreasing=TRUE)
+```
+
+- metoda TOPSIS (Hwang, Yoon 1981):
+
+    - normalizacja danych, rozumiana jako iloraz wartości zmiennej do pierwiastka sumy wartości wszystkich zmiennych podniesionych do kwadratu,
+
+    - wyznaczenie wzorca i antywzorca jako odpowiednio maksimum i minimum wartości zmiennych,
+
+    - wyznaczenie odległości obiektów od wzorca i antywzorca,
+
+    - wyznaczenie wskaźnika rankingowego jako ilorazu odległości obiektu od antywzorca od sumy odległości obiektu od antywzorca i odległości obiektu od wzorca,
+
+    - uporządkowanie malejąco otrzymanych wartości wskaźnika.
+    
+```{r, include=FALSE}
+#TOPSIS bez wag
+krafty_norm1<-data.Normalization(krafty)
+wzorzect1<-c()
+antyt1<-c()
+for (i in 1:6)
+{
+  krafty_norm1[,i]<-krafty_norm1[,i]/sqrt(sum(krafty_norm1[,i]^2))
+  wzorzect1[i]<-max(krafty_norm1[,i])
+  antyt1[i]<-min(krafty_norm1[,i])
+}
+di_wzt1<-c()
+di_antywzt1<-c()
+for(i in 1:20)
+{
+  dane<-rbind(krafty_norm1[i,],wzorzect1)
+  di_wzt1[i]<-dist(dane)
+}
+for(i in 1:20)
+{
+  dane<-rbind(krafty_norm1[i,],antyt1)
+  di_antywzt1[i]<-dist(dane)
+}
+T1<-di_antywzt1/(di_antywzt1+di_wzt1)
+names(T1)<-rownames(krafty)
+#T1<-sort(T1, decreasing=TRUE)
+
+#TOPSIS z wagami eksperckimi
+krafty_norm2<-wagi_e*data.Normalization(krafty)
+wzorzect2<-c()
+antyt2<-c()
+for (i in 1:6)
+{
+  krafty_norm2[,i]<-krafty_norm2[,i]/sqrt(sum(krafty_norm2[,i]^2))
+  wzorzect2[i]<-max(krafty_norm2[,i])
+  antyt2[i]<-min(krafty_norm2[,i])
+}
+di_wzt2<-c()
+di_antywzt2<-c()
+for(i in 1:20)
+{
+  dane<-rbind(krafty_norm2[i,],wzorzect2)
+  di_wzt2[i]<-dist(dane)
+}
+for(i in 1:20)
+{
+  dane<-rbind(krafty_norm2[i,],antyt2)
+  di_antywzt2<-dist(dane)
+}
+T2<-di_antywzt2/(di_antywzt2+di_wzt2)
+names(T2)<-rownames(krafty)
+#T2<-sort(T2, decreasing=TRUE)
+
+#TOPSIS z wagami informacyjnymi
+krafty_norm3<-wagi_wz*data.Normalization(krafty)
+wzorzect3<-c()
+antyt3<-c()
+for (i in 1:6)
+{
+  krafty_norm3[,i]<-krafty_norm3[,i]/sqrt(sum(krafty_norm3[,i]^2))
+  wzorzect3[i]<-max(krafty_norm3[,i])
+  antyt3[i]<-min(krafty_norm3[,i])
+}
+di_wzt3<-c()
+di_antywzt3<-c()
+for(i in 1:20)
+{
+  dane<-rbind(krafty_norm3[i,],wzorzect3)
+  di_wzt3[i]<-dist(dane)
+}
+for(i in 1:20)
+{
+  dane<-rbind(krafty_norm3[i,],antyt3)
+  di_antywzt3<-dist(dane)
+}
+T3<-di_antywzt3/(di_antywzt3+di_wzt3)
+names(T3)<-rownames(krafty)
+#T3<-sort(T3, decreasing=TRUE)
+```
+
+W zależności od zastosowanej metody porządkowania danych oraz użytych wag otrzymane wyniki różnią się od siebie.
+
+Aby ocenić atrakcyjność danego browaru rzemieślniczego za pomocą stworzonych rankingów, autorka posłużyła się grupowaniem obiektów w rankingach według średniej, to znaczy podzieliła ostatecznie uporządkowane liniowo obiekty na cztery grupy według następujących reguł:
+
+- grupa I - obiekty o wartości wskaźnika rankingowego wyższej niż suma średniej i odchylenia standardowego wartości rankingu,
+
+- grupa II - obiekty o wartości wskaźnika rankingowego pomiędzy średnią a sumą średniej i odchylenia standardowego wartości rankingu,
+
+- grupa III - obiekty o wartości wskaźnika rankingowego pomiędzy różnicą średniej i odchylenia standardowego wartości rankingu a średnią wartością rankingu,
+
+- grupa IV - obiekty o wartości wskaźnika rankingowego niższej niż różnica średniej i odchylenia standardowego wartości rankingu.
+
+Poniższy fragment kodu prezentuje działanie pomocniczej funkcji, która dzieli na grupy uporządkowane liniowo obserwacje:
+
+```{r}
+grupy<-function(rank)
+{
+  m<-matrix(0,20,4)
+  for (i in 1:20)
+  {
+    if (rank[i]>(mean(rank)+sd(rank))) #grupa I
+      m[i,1] = m[i,1]+1
+    else if (rank[i]<=(mean(rank)+sd(rank)) && rank[i]>mean(rank))  #grupa II
+      m[i,2] = m[i,2]+1
+    else if (rank[i]<=mean(rank) && rank[i]>(mean(rank)-sd(rank)))  #grupa III
+      m[i,3] = m[i,3]+1
+    else if (rank[i]<(mean(rank)-sd(rank)))   #grupa IV
+      m[i,4] = m[i,4]+1
+  }
+  return (m)
+}
+```
+
+## KLASYFIKACJA BROWARÓW RZEMIEŚLNICZYCH WEDŁUG SYNTETYCZNYCH WSKAŹNIKÓW ATRAKCYJNOŚCI
+
+Poniższa tabela przedstawia podsumowanie liczby wystąpień browarów uporządkowanych alfabetycznie w kolejnych grupach. Pozwoliło to autorce dokonać ostatecznej interpretacji wyników przeprowadzanego badania.
+
+```{r}
+gr<-grupy(MSS)+grupy(MSS_we)+grupy(MSS_wwz)+grupy(sih1)+grupy(sih2)+grupy(sih3)+grupy(T1)+grupy(T2)+grupy(T3)
+rownames(gr)<-c("AleBrowar","Artezan","BroKreacja","FunkyFluid","Golem",
+                "InneBeczki","Maryensztadt","Olimp","Pinta","PiwnePodziemie",
+                "Piwojad","Podgorz","PracowniaPiwa","Raduga","ReCraft","Rockmill",
+                "StuMostow","TrzechKumpli","Widawa","ZiemiaObiecana")
+colnames(gr)<-c("grupa I","grupa II","grupa III", "grupa IV")
+gr
+```
+
+Grupę I autorka uznaje za odpowiadającą "najbardziej atrakcyjnej dla konsumenta". Odpowiednio grupy II, III oraz IV uznaje za "dosyć atrakcyjne", "mało atrakcyjne", "nieatrakcyjne".
+
+Jak łatwo zauważyć, do grupy I zakwalifikowało się 7 spośród badanych 20 browarów, jednak dwa z nich zdaniem autorki zasługują na największą uwagę ze względu na najczęstsze występowanie w grupie I. Są to browary: BroKreacja (występująca wyłącznie w grupie I) oraz Browar Golem (pojawiający się 1 raz w grupie II). Taki rezultat świadczy o tym, że praktycznie niezależnie od przyjętych w badaniu wag, wyżej wymienione charakteryzują się największą atrakcyjnością dla konsumentów. Zestawiając to z wyjściowymi danymi, można z łatwością zauważyć, że na pierwszy rzut oka browary te nie wyróżniają się ani najwyższymi liczbami premier, ani liczbą nagród z konkursu w Poznaniu ani pozostałymi cechami, jednak pod względem badanych cech okazują się najbardziej atrakcyjnymi. Najbardziej prawdopodobnym typem konsumenta jest w tym przypadku osoba, która zna oferty wielu browarów (nie tylko polskich) oraz ma dosyć sprecyzowane wymagania w kontekście dodatków, takich jak chmiele, czy procesu produkcyjnego, takiego jak leżakowanie piwa w beczce po innym alkoholu lub nierozważane w badaniu zakażanie bakteriami konkretnych szczepów. Jest to największa grupa wśród konsumentów piw rzemieślniczych.
+
+Kolejnym wnioskiem, który można wyciągnąć interpretując powyższą tabelę, jest przyporządkowanie aż trzech browarów wyłącznie do grupy IV. Autorka proponuje następującą interpretację: browary, które zostały zaliczone do grupy IV, przedstawiają się jako najmniej atrakcyjne dla konsumentów w świetle badanych cech. Są to: Browar Funky Fluid, Browar Piwojad oraz Browar Raduga. Może to wynikać z faktu, że głównym segmentem rynkowym tych browarów jest konsument, którego można określić mianem "początkującego" w obszarze piw rzemieślniczych. Stąd wyżej wymienione browary, których celem nie jest konsument o wysoko sprecyzowanych wymaganiach, przedstawiają relatywnie najniższą z rozważanych atrakcyjność oferty.
+
+Ostatnia spośród proponowanych przez autorkę interpretacji wyników skupia się na tych browarach, które występowały "na pograniczu grup", to znaczy w grupach I i II pojawiały się odpowiednio 4 i 5 razy. Rozważane są tutaj trzy browary: Browar PINTA, Browar Stu Mostów oraz Browar Trzech Kumpli. W tym przypadku to, czy okazały się one browarami najbardziej atrakcyjnymi lub tylko dosyć atrakcyjnymi dla konsumenta, jest w wysokim stopniu zdeterminowanie nałożonymi wagami. Z punktu widzenia rynku piw rzemieślniczych taki wynik nie powinien być zaskoczeniem, gdyż są to browary, które posiadają znacznie rozbudowaną ofertę pod względem różnorodności gatunków piw, jednak wykazują nieco podobieństwa do omawianych wyżej browarów z grupy IV, gdyż ich celem również nie jest konsument o wysoko sprecyzowanych wymaganich atrakcyjności w sensie zaprezentowanym we wstępie do badania.
+
+## PODSUMOWANIE
+
+Przeprowadzone badanie pozwoliło, zgodnie z oczekiwaniami określonymi w sekcji *Dane źródłowe*, wskazać najbardziej oraz najmniej atrakcyjne dla konsumenta browary rzemieślnicze w Polsce w roku 2018. Należy jednak pamiętać, że nie jest to ranking uwzględniający wszystkie browary, a w badaniu nie wzięto pod uwagę destymulant. Gdyby udało się rzetelnie zmierzyć i uwzględnić destymulanty i potencjalnie nominanty, jest bardzo prawdopodobne, że nastąpiłoby zatarcie dosyć wyraźnie zarysowanych granic pomiędzy browarami postrzeganymi w badaniu jako atrakcyjne oraz nieatrakcyjne dla konsumenta. 
+
+## Literatura
+
+- http://www.zwrotnica.com.pl
+
+- http://www.kraftroku.pl/post/kraft-roku-2018-wyniki,12.html 
+
+- Marek Walesiak "Visualization of linear ordering results for metric data with the application of multidimensional scaling", Prace Naukowe Uniwersytetu Ekonomicznego we Wrocłaiu, nr 252/2016
+
+- Dorota Strózik, Tomasz Strózik "Przestrzenne zróżnicowanie poziomu życia w województwie wielkopolskim", Prace Naukowe Uniwersytetu Ekonomicznego we Wrocłaiu, nr 328/2014
+
+- Marta Kuc "Poziom życia w regionach państw nordyckich z uwzględnieniem zależności przestrzennych", Prace Naukowe Uniwersytetu Ekonomicznego we Wrocłaiu, nr 469/2017
